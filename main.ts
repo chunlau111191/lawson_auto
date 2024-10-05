@@ -384,8 +384,8 @@ const runProgram = async (
   let path =
     "https://sakurazaka46.com/s/s46/ticket/detail/10thSG_backslive?ima=0000";
   // information configuration
-  let fc_account = "chunlau@outlook.com";
-  let fc_pw = "ryoma911";
+  let fc_account = "xxx@outlook.com";
+  let fc_pw = "XXXXX";
   let lawson_four_digit_pw = "R111";
   // payment methods 0 = credit card, 1 = convenience store
   const paymentMethod = 1;
