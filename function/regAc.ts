@@ -78,6 +78,7 @@ const runProgram = async (
   let current_data = json[time];
   // from the json file
   let tel_number = current_data.phone;
+  let tixplus_ac = current_data.tixplus_ac;
   let email_address = current_data.email;
   let jp_last = current_data.jp_last;
   let jp_first = current_data.jp_first;
@@ -90,6 +91,8 @@ const runProgram = async (
   let randomBanNumber: number = getRandomBanNumber();
 
   console.log(
+    "tixplus_ac",
+    tixplus_ac,
     "tel_number",
     tel_number,
     "email_address",
@@ -229,13 +232,13 @@ const runProgram = async (
     const navigationSuccess1 = await retryOnTryAgainButton(
       page,
       "#neterrorTryAgainButton",
-      20,
+      50,
       5000
     );
 
     // input email and telephone number
     if (navigationSuccess1) {
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1500);
       const emailBox1 = await page.$("#MAIL_ADDRS");
       const emailBox2 = await page.$("#MAIL_ADDRS_CONFIRM");
       const telBox = await page.$("#TEL");
@@ -254,7 +257,7 @@ const runProgram = async (
       console.log("Confirm button clicked successfully.");
 
       // Handle the "Try Again" button in case it appears after clicking confirm
-      await retryOnTryAgainButton(page, "#neterrorTryAgainButton", 20, 5000);
+      await retryOnTryAgainButton(page, "#neterrorTryAgainButton", 50, 5000);
 
       // wait for 20 seconds for human verification
       await page.waitForNavigation({ timeout: 10 * 60 * 1000 });
@@ -267,12 +270,7 @@ const runProgram = async (
       //check the payment method
       await paymentBox?.click();
       await page.waitForTimeout(800);
-      console.log(
-        "four digit password box",
-        lawson_four_digit_pw,
-        "tel number",
-        tel_number
-      );
+
       // lawson four digit password box
       const lawsonBoxes = await page.$$(".js-validate");
       const lawsonBox1 = lawsonBoxes[0];
@@ -312,7 +310,7 @@ const runProgram = async (
       await lawsonMonthBox?.fill(month);
       await lawsonDayBox?.fill(day);
       await genderBox?.click();
-      await tixplusIDBox?.fill(current_data.tixplus_ac);
+      await tixplusIDBox?.fill(tixplus_ac);
       await postalCodeBox?.fill(postal_code);
       await addressNumberBox?.fill(randomBanNumber.toString());
 
