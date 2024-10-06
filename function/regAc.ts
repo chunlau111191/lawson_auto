@@ -100,6 +100,8 @@ const runProgram = async (
     tixplus_ac,
     "tel_number",
     tel_number,
+    "lawson_four_digit_pw",
+    lawson_four_digit_pw,
     "email_address",
     email_address,
     "jp_last",
@@ -315,24 +317,19 @@ const runProgram = async (
       await lawsonJapanFirstNameBox?.fill(jp_first);
       await lawsonKataLastNameBox?.fill(kata_last);
       await lawsonKataFirstNameBox?.fill(kata_first);
-      await lawsonYearBox?.fill(year);
-      await lawsonMonthBox?.fill(month);
-      await lawsonDayBox?.fill(day);
+      console.log("Filled name successfully.");
+      await lawsonYearBox?.fill(year.toString());
+      await lawsonMonthBox?.fill(month.toString());
+      await lawsonDayBox?.fill(day.toString());
+      console.log("DOB filled successfully.");
       await genderBox?.click();
       await tixplusIDBox?.fill(tixplus_ac);
       await postalCodeBox?.fill(postal_code);
       await addressNumberBox?.fill(randomBanNumber.toString());
+      console.log("Address info filled successfully.");
 
       await page.waitForTimeout(800);
       // 同行 if needed
-      if (numberOfticket == 2) {
-        const secondPersonPhoneBox = await page.$("#q_10");
-        const secondPersonTixplusBox = await page.$("#q_11");
-
-        // fill the value
-        await secondPersonPhoneBox?.fill(secondPersonPhone);
-        await secondPersonTixplusBox?.fill(secondPersonTixplus);
-      }
 
       // search address from postal code
       const searchButton = await page.$("#APLCT_ADDRESS_SEARCH_BUTTON");
@@ -353,6 +350,19 @@ const runProgram = async (
       await checkBox4?.click();
 
       await page.waitForTimeout(800);
+
+      if (numberOfticket == 2) {
+        const secondPersonPhoneBox = await page.$("#q_10");
+        const secondPersonTixplusBox = await page.$("#q_11");
+
+        // fill the value
+        await secondPersonPhoneBox?.fill(secondPersonPhone);
+        await secondPersonTixplusBox?.fill(secondPersonTixplus);
+        await page.waitForTimeout(800);
+      } else {
+        console.log("No second person information needed.");
+      }
+
       // confirm button
       const confirmButton3 = await page.$("#NEXT_BUTTON");
       await confirmButton3?.click();
@@ -372,7 +382,7 @@ const runProgram = async (
       const finalConfirmButton = await page.$("#ENTRY_FIX");
       await finalConfirmButton?.click();
 
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(800);
     } else {
       console.error("Failed to navigate after first retry.");
     }

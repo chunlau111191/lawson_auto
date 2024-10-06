@@ -9,9 +9,9 @@ import { runProgram, reg_list_json } from "./function/regAc";
   let path =
     "https://sakurazaka46.com/s/s46/ticket/detail/10thSG_backslive?ima=0000";
   // information configuration
-  let fc_account = "XX@outlook.com";
-  let fc_pw = "123456";
-  let lawson_four_digit_pw = "A111";
+  let fc_account = "XXXX@outlook.com";
+  let fc_pw = "XXXXX";
+  let lawson_four_digit_pw = "X111";
   // payment methods 0 = credit card, 1 = convenience store
   const paymentMethod = 1;
   // gender Male = 0, Female = 1
@@ -28,8 +28,8 @@ import { runProgram, reg_list_json } from "./function/regAc";
 
   // second person information
   const secondPerson = {
-    telephone: "09012345678",
-    tixplusAccount: "EXXXXXXXX",
+    telephone: "090XXXXYYYY",
+    tixplusAccount: "EXXXXXXXXXX",
   };
 
   // define min and max row and event day
@@ -38,7 +38,7 @@ import { runProgram, reg_list_json } from "./function/regAc";
   let minEventDay: number;
   let maxEventDay: number;
 
-  if (Number(mode) === 1) {
+  if (Number(mode) == 1) {
     // set number of records to be created
     minRow = 1;
     maxRow = reg_list_json.length;
@@ -48,7 +48,7 @@ import { runProgram, reg_list_json } from "./function/regAc";
     maxEventDay = 3;
   } else {
     // set number of records to be created
-    minRow = 9;
+    minRow = 1;
     maxRow = minRow;
 
     // set min and max event day
