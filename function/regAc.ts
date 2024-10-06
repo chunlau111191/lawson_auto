@@ -1,7 +1,7 @@
 import { firefox } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { retryOnTryAgainButton } from "./functions";
-import XLSX from "xlsx";
+import { RegList } from "./readExcel";
 import * as winston from "winston";
 import { getRandomPostalCode, getRandomBanNumber } from "./addressList";
 
@@ -21,65 +21,13 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-const file_path = "./config_file/tixplus_ac.xlsx";
-// read the file and use the first column as the path list, get the 'EMAIL', 'TIXPLUS_AC', 'PHONE', 'JP_LAST',	'JP_FIRST',	'KATA_LAST' and	'KATA_FIRST'
-const wb = XLSX.readFile(file_path);
-const ws = wb.Sheets["Sheet1"];
-interface RowData {
-  EMAIL: string;
-  TIXPLUS_AC: string;
-  PHONE: string;
-  JP_LAST: string;
-  JP_FIRST: string;
-  KATA_LAST: string;
-  KATA_FIRST: string;
-  DOB: string;
-  YEAR: string;
-  MONTH: string;
-  DAY: string;
-}
-
-const sheetJson: RowData[] = XLSX.utils.sheet_to_json<RowData>(ws);
-
-const reg_list_json = sheetJson.map((row) => {
-  // const [year, month, day] = row.DOB.split("-"); // Split the DOB into year, month, and day
-
-  return {
-    email: row.EMAIL,
-    tixplus_ac: row.TIXPLUS_AC,
-    phone: row.PHONE,
-    jp_last: row.JP_LAST,
-    jp_first: row.JP_FIRST,
-    kata_last: row.KATA_LAST,
-    kata_first: row.KATA_FIRST,
-    year: row.YEAR, // Add year to the object
-    month: row.MONTH, // Add month to the object
-    day: row.DAY, // Add day to the object
-  };
-});
-
-const userAgentStrings = [
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/129.0.6668.69 Mobile/15E148 Safari/604.1",
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/605.1.15",
-  // andriod user agent
-  "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Mobile Safari/537.36",
-  "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Mobile Safari/537.36",
-  "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Mobile Safari/537.36",
-];
-
-// interface RegListData {
-//   EMAIL: string;
-//   TIXPLUS_AC: string;
-//   PHONE: string;
-//   JP_LAST: string;
-//   JP_FIRST: string;
-//   KATA_LAST: string;
-//   KATA_FIRST: string;
-//   year: string;
-//   month: string;
-//   day: string;
-// }
+//read the excel file
+//main account
+const reg_list_json = RegList.readExcelFile("./config_file/tixplus_ac.xlsx");
+//second account
+const reg_list_json2 = RegList.readExcelFile(
+  "./config_file/tixplus_ac_second.xlsx"
+);
 
 const runProgram = async (
   path: string,
@@ -93,8 +41,8 @@ const runProgram = async (
   dayIndex: number,
   seatIndex: number,
   numberOfticket: number,
-  secondPersonPhone?: string,
-  secondPersonTixplus?: string
+  json2?: any,
+  genderIdx2?: number
 ) => {
   let current_data = json[time];
   // from the json file
@@ -111,6 +59,26 @@ const runProgram = async (
   let postal_code: string = getRandomPostalCode().postalCode;
   let randomBanNumber: number = getRandomBanNumber();
 
+  let current_data2;
+  let secondPersonPhone;
+  let secondPersonTixplus;
+  let secondPersonJpLast;
+  let secondPersonJpFirst;
+  let secondPersonYear;
+  let secondPersonMonth;
+  let secondPersonDay;
+  //同行者 information
+  if (json2) {
+    current_data2 = json2[time];
+    secondPersonPhone = current_data2.phone;
+    secondPersonTixplus = current_data2.tixplus_ac;
+    secondPersonJpLast = current_data2.jp_last;
+    secondPersonJpFirst = current_data2.jp_first;
+    secondPersonYear = current_data2.year;
+    secondPersonMonth = String(current_data2.month).padStart(2, "0");
+    secondPersonDay = String(current_data2.day).padStart(2, "0");
+  }
+
   let browser: any = null;
   try {
     // configure the Stealth plugin
@@ -122,7 +90,7 @@ const runProgram = async (
     const context = await browser.newContext({
       viewport: { width: 375, height: 667 },
       userAgent:
-        userAgentStrings[Math.floor(Math.random() * userAgentStrings.length)],
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
       timezoneId: "Asia/Tokyo",
       locale: "ja-JP",
     });
@@ -316,7 +284,6 @@ const runProgram = async (
       logger.info("Postal code and address number filled successfully.");
 
       await page.waitForTimeout(800);
-      // 同行 if needed
 
       // search address from postal code
       const searchButton = await page.$("#APLCT_ADDRESS_SEARCH_BUTTON");
@@ -338,6 +305,7 @@ const runProgram = async (
 
       await page.waitForTimeout(800);
 
+      // 同行 if needed
       if (numberOfticket == 2) {
         const secondPersonPhoneBox = await page.$("#q_10");
         const secondPersonTixplusBox = await page.$("#q_11");
@@ -346,14 +314,53 @@ const runProgram = async (
         await secondPersonPhoneBox?.fill(secondPersonPhone);
         await secondPersonTixplusBox?.fill(secondPersonTixplus);
         await page.waitForTimeout(800);
+
+        const confirmButton3 = await page.$("#NEXT_BUTTON");
+        await confirmButton3?.click();
+        await page.waitForTimeout(800);
+
+        // second person name and DoB
+        const secondPersonJapanLastNameBox = await page.$("#c_1_name_family");
+        const secondPersonJapanFirstNameBox = await page.$("#c_1_name_first");
+        const secondPersonYearBox = await page.$("#c_1_birthDay_year");
+        const secondPersonMonthBox = await page.$("#c_1_birthDay_month");
+        const secondPersonDayBox = await page.$("#c_1_birthDay_day");
+
+        // male = "#c_1_gender-1" female = "#c_1_gender-2"
+        let secondPersonGender;
+        if (genderIdx2 == 0) {
+          secondPersonGender = await page.$("#c_1_gender-1");
+        } else {
+          secondPersonGender = await page.$("#c_1_gender-2");
+        }
+
+        // drop down address
+        const secondPersonCityList = await page.$("#c_1_address");
+
+        // fill the value
+        await secondPersonJapanLastNameBox?.fill(secondPersonJpLast);
+        await secondPersonJapanFirstNameBox?.fill(secondPersonJpFirst);
+        await secondPersonYearBox?.fill(secondPersonYear.toString());
+        if (secondPersonMonth !== undefined) {
+          await secondPersonMonthBox?.fill(secondPersonMonth.toString());
+        }
+        if (secondPersonDay !== undefined) {
+          await secondPersonDayBox?.fill(secondPersonDay.toString());
+        }
+        await secondPersonGender?.click();
+        await secondPersonCityList?.selectOption({ index: 18 });
+
+        await page.waitForTimeout(800);
+        const confirmButton4 = await page.$("#NEXT");
+        await confirmButton4?.click();
+        await page.waitForTimeout(800);
       } else {
-        logger.error("Number of tickets is not 2.");
+        // confirm button
+        const confirmButton3 = await page.$("#NEXT_BUTTON");
+        await confirmButton3?.click();
+        await page.waitForTimeout(800);
       }
 
-      // confirm button
-      const confirmButton3 = await page.$("#NEXT_BUTTON");
-      await confirmButton3?.click();
-      await page.waitForTimeout(800);
       // await page.waitForNavigation();
 
       // unsubscribe checkbox and consent box
@@ -383,4 +390,4 @@ const runProgram = async (
   }
 };
 
-export { runProgram, reg_list_json, logger };
+export { runProgram, reg_list_json, logger, reg_list_json2 };
