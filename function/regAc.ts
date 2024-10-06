@@ -2,8 +2,25 @@ import { firefox } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { retryOnTryAgainButton } from "./functions";
 import XLSX from "xlsx";
-
+import * as winston from "winston";
 import { getRandomPostalCode, getRandomBanNumber } from "./addressList";
+
+// create a logger for logging only no need to log to a file with timestamp
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple(),
+    winston.format.timestamp({
+      format: "YYYY-MM-DD HH:mm:ss",
+    }),
+    winston.format.printf(({ level, message, timestamp }) => {
+      return `${timestamp} ${level}: ${message}`;
+    })
+  ),
+  transports: [new winston.transports.Console()],
+});
+
 const file_path = "./config_file/tixplus_ac.xlsx";
 // read the file and use the first column as the path list, get the 'EMAIL', 'TIXPLUS_AC', 'PHONE', 'JP_LAST',	'JP_FIRST',	'KATA_LAST' and	'KATA_FIRST'
 const wb = XLSX.readFile(file_path);
@@ -79,7 +96,6 @@ const runProgram = async (
   secondPersonPhone?: string,
   secondPersonTixplus?: string
 ) => {
-  console.log("time", time + 1);
   let current_data = json[time];
   // from the json file
   let tel_number = current_data.phone;
@@ -94,35 +110,6 @@ const runProgram = async (
   let day = String(current_data.day).padStart(2, "0");
   let postal_code: string = getRandomPostalCode().postalCode;
   let randomBanNumber: number = getRandomBanNumber();
-
-  console.log(
-    "tixplus_ac",
-    tixplus_ac,
-    "tel_number",
-    tel_number,
-    "lawson_four_digit_pw",
-    lawson_four_digit_pw,
-    "email_address",
-    email_address,
-    "jp_last",
-    jp_last,
-    "jp_first",
-    jp_first,
-    "kata_last",
-    kata_last,
-    "kata_first",
-    kata_first,
-    "year",
-    year,
-    "month",
-    month,
-    "day",
-    day,
-    "secondPersonPhone",
-    secondPersonPhone,
-    "secondPersonTixplus",
-    secondPersonTixplus
-  );
 
   let browser: any = null;
   try {
@@ -156,11 +143,11 @@ const runProgram = async (
 
     if (firstButton) {
       await firstButton.click();
-      console.log("First button clicked successfully.");
+      logger.info("First button clicked successfully.");
     } else {
       console.error("No buttons found.");
     }
-    console.log("Button clicked successfully.");
+    logger.info("First button clicked successfully.");
 
     await page.waitForTimeout(2000);
     //fill email and pw in FC login page
@@ -261,11 +248,11 @@ const runProgram = async (
       await telBox?.fill(tel_number);
       await telBox2?.fill(tel_number);
 
-      console.log("Filled email and telephone successfully.");
+      logger.info("Filled email and telephone number successfully.");
 
       // Click the confirm button
       await confirmButton?.click();
-      console.log("Confirm button clicked successfully.");
+      logger.info("Clicked confirm button successfully.");
 
       // Handle the "Try Again" button in case it appears after clicking confirm
       await retryOnTryAgainButton(page, "#neterrorTryAgainButton", 50, 5000);
@@ -273,7 +260,7 @@ const runProgram = async (
       // wait for 20 seconds for human verification
       await page.waitForNavigation({ timeout: 10 * 60 * 1000 });
 
-      console.log("Resuming script after manual verification.");
+      logger.info("Human verification passed successfully.");
 
       // select the payment method
       const paymentBoxes = await page.$$(".showBtn");
@@ -288,7 +275,7 @@ const runProgram = async (
       const lawsonBox2 = lawsonBoxes[1];
       await lawsonBox1?.fill(lawson_four_digit_pw);
       await lawsonBox2?.fill(lawson_four_digit_pw);
-      console.log("Filled Lawson password successfully.", lawson_four_digit_pw);
+      logger.info("Filled Lawson four digit password successfully.");
 
       await page.waitForTimeout(800);
       //telephone
@@ -296,7 +283,7 @@ const runProgram = async (
       const lawsonTelBox2 = await page.$("#EL_TAKE_OVER_FR_TEL_CNF");
       await lawsonTelBox?.fill(tel_number);
       await lawsonTelBox2?.fill(tel_number);
-      console.log("Filled Lawson telephone number successfully.", tel_number);
+      logger.info("Filled telephone number successfully.");
 
       // name and DoB
       const lawsonJapanLastNameBox = await page.$("#APLCT_FIRST_NAME");
@@ -317,16 +304,16 @@ const runProgram = async (
       await lawsonJapanFirstNameBox?.fill(jp_first);
       await lawsonKataLastNameBox?.fill(kata_last);
       await lawsonKataFirstNameBox?.fill(kata_first);
-      console.log("Filled name successfully.");
+      logger.info("Name filled successfully.");
       await lawsonYearBox?.fill(year.toString());
       await lawsonMonthBox?.fill(month.toString());
       await lawsonDayBox?.fill(day.toString());
-      console.log("DOB filled successfully.");
+      logger.info("DoB filled successfully.");
       await genderBox?.click();
       await tixplusIDBox?.fill(tixplus_ac);
       await postalCodeBox?.fill(postal_code);
       await addressNumberBox?.fill(randomBanNumber.toString());
-      console.log("Address info filled successfully.");
+      logger.info("Postal code and address number filled successfully.");
 
       await page.waitForTimeout(800);
       // 同行 if needed
@@ -360,7 +347,7 @@ const runProgram = async (
         await secondPersonTixplusBox?.fill(secondPersonTixplus);
         await page.waitForTimeout(800);
       } else {
-        console.log("No second person information needed.");
+        logger.error("Number of tickets is not 2.");
       }
 
       // confirm button
@@ -384,16 +371,16 @@ const runProgram = async (
 
       await page.waitForTimeout(800);
     } else {
-      console.error("Failed to navigate after first retry.");
+      logger.error("Failed to navigate to the next page.");
     }
   } catch (error) {
-    console.error("Error processing:", error);
+    logger.error("Error occurred:", error);
   } finally {
     if (browser) {
       await browser.close();
     }
-    console.log("Browser closed.");
+    logger.info("Browser closed successfully.");
   }
 };
 
-export { runProgram, reg_list_json };
+export { runProgram, reg_list_json, logger };

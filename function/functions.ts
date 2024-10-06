@@ -1,3 +1,5 @@
+import { logger } from "./regAc";
+
 async function retryOnTryAgainButton(
   page: any,
   tryAgainSelector: string,
@@ -16,7 +18,7 @@ async function retryOnTryAgainButton(
       tryAgainButton = await page.$(tryAgainSelector); // Use the passed selector
 
       if (tryAgainButton) {
-        console.log("Try Again button found. Clicking it...");
+        logger.info("Try Again button found. Retrying...");
         await tryAgainButton.click();
 
         // Wait for navigation but with a timeout to prevent hanging on navigation errors
@@ -25,23 +27,23 @@ async function retryOnTryAgainButton(
           waitUntil: "load",
         });
         navigationSuccess = true;
-        console.log("Page navigated successfully.");
+        logger.info("Navigation successful after retry.");
       } else {
-        console.log("No Try Again button found. Proceeding...");
+        logger.info("Try Again button not found. Proceeding...");
         navigationSuccess = true;
         break;
       }
     } catch (error) {
-      console.error("Navigation failed, retrying...", error);
+      logger.error(`Error during retry: ${error}`);
       retryCount++;
     }
   } while (!navigationSuccess && retryCount < maxRetries); // Set a limit to the retries
 
   if (retryCount >= maxRetries) {
-    console.error("Exceeded maximum retry attempts for 'Try Again' button.");
+    logger.error("Navigation failed after retry.");
     return false;
   } else {
-    console.log("Navigation successful after retry.");
+    logger.info("Navigation successful after retry.");
     return true;
   }
 }
