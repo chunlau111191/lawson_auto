@@ -17,12 +17,15 @@ interface RowData {
   KATA_LAST: string;
   KATA_FIRST: string;
   DOB: string;
+  YEAR: string;
+  MONTH: string;
+  DAY: string;
 }
 
 const sheetJson: RowData[] = XLSX.utils.sheet_to_json<RowData>(ws);
 
 const reg_list_json = sheetJson.map((row) => {
-  const [year, month, day] = row.DOB.split("-"); // Split the DOB into year, month, and day
+  // const [year, month, day] = row.DOB.split("-"); // Split the DOB into year, month, and day
 
   return {
     email: row.EMAIL,
@@ -32,9 +35,9 @@ const reg_list_json = sheetJson.map((row) => {
     jp_first: row.JP_FIRST,
     kata_last: row.KATA_LAST,
     kata_first: row.KATA_FIRST,
-    year: year, // Add year to the object
-    month: month, // Add month to the object
-    day: day, // Add day to the object
+    year: row.YEAR, // Add year to the object
+    month: row.MONTH, // Add month to the object
+    day: row.DAY, // Add day to the object
   };
 });
 
@@ -72,7 +75,9 @@ const runProgram = async (
   genderIdx: number,
   dayIndex: number,
   seatIndex: number,
-  numberOfticket: number
+  numberOfticket: number,
+  secondPersonPhone?: string,
+  secondPersonTixplus?: string
 ) => {
   console.log("time", time + 1);
   let current_data = json[time];
@@ -110,7 +115,11 @@ const runProgram = async (
     "month",
     month,
     "day",
-    day
+    day,
+    "secondPersonPhone",
+    secondPersonPhone,
+    "secondPersonTixplus",
+    secondPersonTixplus
   );
 
   let browser: any = null;
@@ -315,6 +324,15 @@ const runProgram = async (
       await addressNumberBox?.fill(randomBanNumber.toString());
 
       await page.waitForTimeout(800);
+      // 同行 if needed
+      if (numberOfticket == 2) {
+        const secondPersonPhoneBox = await page.$("#q_10");
+        const secondPersonTixplusBox = await page.$("#q_11");
+
+        // fill the value
+        await secondPersonPhoneBox?.fill(secondPersonPhone);
+        await secondPersonTixplusBox?.fill(secondPersonTixplus);
+      }
 
       // search address from postal code
       const searchButton = await page.$("#APLCT_ADDRESS_SEARCH_BUTTON");
