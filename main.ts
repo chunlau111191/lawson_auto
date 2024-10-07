@@ -1,33 +1,27 @@
-import { runProgram } from "./function/regAc";
-import { RegList } from "./function/readExcel";
+import { runProgram, reg_list_json, reg_list_json2 } from "./function/regAc";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 (async () => {
   // set mode to 1 for running the full program, 0 for running partial program
   // use prompt to ask user for input
   let mode = 1;
 
-  //read the excel file
-  //main account
-  const reg_list_json = await RegList.readExcelFile(
-    "./config_file/tixplus_ac.xlsx"
-  );
-
-  //second account
-  const reg_list_json2 = await RegList.readExcelFile(
-    "./config_file/tixplus_ac_second.xlsx"
-  );
-
   // set path to the event
   let path =
     "https://sakurazaka46.com/s/s46/ticket/detail/10thSG_backslive?ima=0000";
+
   // information configuration
-  let fc_account = "xxxx@outlook.com";
-  let fc_pw = "xxxxxxxx";
-  let lawson_four_digit_pw = "xxxx";
+  let fc_account = process.env?.FC_ACCOUNT ?? "";
+  let fc_pw = process.env?.FC_PW ?? "";
+  let lawson_four_digit_pw = process.env?.LAWSON_FOUR_DIGIT_PW ?? "";
+
   // payment methods 0 = credit card, 1 = convenience store
   const paymentMethod = 1;
   // gender Male = 0, Female = 1
   const genderIdx = 0;
+  const genderIdx2 = 0;
 
   // Day Selection. index 0 = day1, index 1 = day2, index 2 = day3
   // const dayIndex = 2;
@@ -36,7 +30,7 @@ import { RegList } from "./function/readExcel";
   const seatIndex = 0;
 
   // 1 = 1枚, 2 = 2枚
-  let numberOfTicket = 2;
+  let numberOfTicket = 1;
 
   // define min and max row and event day
   let minRow: number;
@@ -79,7 +73,8 @@ import { RegList } from "./function/readExcel";
           dayIndex,
           seatIndex,
           numberOfTicket,
-          reg_list_json2
+          reg_list_json2,
+          genderIdx2
         );
       } else {
         await runProgram(

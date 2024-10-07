@@ -1,7 +1,7 @@
 import { firefox } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { retryOnTryAgainButton } from "./functions";
-
+import { RegList } from "./readExcel";
 import * as winston from "winston";
 import { getRandomPostalCode, getRandomBanNumber } from "./addressList";
 
@@ -20,6 +20,14 @@ const logger = winston.createLogger({
   ),
   transports: [new winston.transports.Console()],
 });
+
+//read the excel file
+//main account
+const reg_list_json = RegList.readExcelFile("./config_file/tixplus_ac.xlsx");
+//second account
+const reg_list_json2 = RegList.readExcelFile(
+  "./config_file/tixplus_ac_second.xlsx"
+);
 
 const runProgram = async (
   path: string,
@@ -382,4 +390,4 @@ const runProgram = async (
   }
 };
 
-export { runProgram, logger };
+export { runProgram, reg_list_json, logger, reg_list_json2 };
