@@ -1,17 +1,29 @@
-import { runProgram, reg_list_json } from "./function/regAc";
+import { runProgram } from "./function/regAc";
+import { RegList } from "./function/readExcel";
 
 (async () => {
   // set mode to 1 for running the full program, 0 for running partial program
   // use prompt to ask user for input
   let mode = 1;
 
+  //read the excel file
+  //main account
+  const reg_list_json = await RegList.readExcelFile(
+    "./config_file/tixplus_ac.xlsx"
+  );
+
+  //second account
+  const reg_list_json2 = await RegList.readExcelFile(
+    "./config_file/tixplus_ac_second.xlsx"
+  );
+
   // set path to the event
   let path =
     "https://sakurazaka46.com/s/s46/ticket/detail/10thSG_backslive?ima=0000";
   // information configuration
-  let fc_account = "XX@outlook.com";
-  let fc_pw = "XXXX";
-  let lawson_four_digit_pw = "X111";
+  let fc_account = "xxxx@outlook.com";
+  let fc_pw = "xxxxxxxx";
+  let lawson_four_digit_pw = "xxxx";
   // payment methods 0 = credit card, 1 = convenience store
   const paymentMethod = 1;
   // gender Male = 0, Female = 1
@@ -24,13 +36,7 @@ import { runProgram, reg_list_json } from "./function/regAc";
   const seatIndex = 0;
 
   // 1 = 1枚, 2 = 2枚
-  let numberOfTicket = 1;
-
-  // second person information
-  const secondPerson = {
-    telephone: "090XXXXYYYY",
-    tixplusAccount: "EXXXXXXXXXX",
-  };
+  let numberOfTicket = 2;
 
   // define min and max row and event day
   let minRow: number;
@@ -73,8 +79,7 @@ import { runProgram, reg_list_json } from "./function/regAc";
           dayIndex,
           seatIndex,
           numberOfTicket,
-          secondPerson["telephone"],
-          secondPerson["tixplusAccount"]
+          reg_list_json2
         );
       } else {
         await runProgram(
